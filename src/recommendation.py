@@ -3,7 +3,7 @@ from .financial_calculator import calculate, DP_OPTIONS, TENORS
 
 
 def recommend(catalog, income, budget, dp_percent, tenure, other_debt=0, rate=0,
-              mode='dataset', explore=False, ranking='Cicilan terendah', body='Semua', exclude=None):
+              mode='dataset', explore=False, ranking='Cicilan terendah', body='Semua', exclude=None, return_stats=False):
     orders = {
         'Cicilan terendah': ['installment', 'total_payment', 'down_payment', 'tenure'],
         'DP terendah': ['down_payment', 'installment', 'total_payment', 'tenure'],
@@ -14,19 +14,29 @@ def recommend(catalog, income, budget, dp_percent, tenure, other_debt=0, rate=0,
     if ranking not in orders or budget < 0:
         raise ValueError('Kriteria rekomendasi tidak valid.')
     rows = []
+    stats = dict(cars_considered=0, combinations=0, ratio_pass=0, dp_pass=0, both_pass=0, unique_cars=0, displayed=0)
     for car in catalog.itertuples(index=False):
         if (car.company, car.model) == exclude or (body != 'Semua' and car.body_style != body):
             continue
+        stats['cars_considered'] += 1
         for d in DP_OPTIONS if explore else (dp_percent,):
             for t in TENORS if explore else (tenure,):
                 f = calculate(int(car.price_idr), d, t, income, other_debt, rate, mode)
+                stats['combinations'] += 1
+                stats['ratio_pass'] += int(f.affordable)
+                stats['dp_pass'] += int(f.down_payment <= budget)
                 if f.affordable and f.down_payment <= budget:
+                    stats['both_pass'] += 1
                     rows.append(dict(company=car.company, model=car.model, body_style=car.body_style,
                                      price=f.price, dp_percent=d, down_payment=f.down_payment, tenure=t,
                                      installment=f.installment, ratio=f.ratio, total_payment=f.total_payment))
     if not rows:
-        return pd.DataFrame()
+        empty = pd.DataFrame()
+        return (empty, stats) if return_stats else empty
     cols = orders[ranking] + ['company', 'model']
     ascending = [not (ranking == 'Harga mobil tertinggi' and c == 'price') for c in cols]
-    return (pd.DataFrame(rows).sort_values(cols, ascending=ascending)
-            .drop_duplicates(['company', 'model']).head(5).reset_index(drop=True))
+    ranked = pd.DataFrame(rows).sort_values(cols, ascending=ascending).drop_duplicates(['company', 'model'])
+    stats['unique_cars'] = len(ranked)
+    result = ranked.head(5).reset_index(drop=True)
+    stats['displayed'] = len(result)
+    return (result, stats) if return_stats else result

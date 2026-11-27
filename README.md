@@ -11,13 +11,22 @@ Proyek data science untuk membandingkan algoritma regresi dan klasifikasi, mengh
 - Random Forest, XGBoost dan algoritma lain tetap dibandingkan di notebook dan laporan CV.
 - Target cicilan dataset mengikuti rumus tanpa bunga; label klasifikasi berasal dari rasio cicilan terhadap pendapatan ≤35%. Skor tinggi merefleksikan target deterministik, bukan kemampuan memprediksi persetujuan kredit atau gagal bayar nyata.
 
+## Pembaruan V3: UI dan transparansi algoritma
+
+- Formulir utama di samping hasil. Simulasi hanya berjalan setelah tombol **Jalankan simulasi** ditekan. Hasil tetap mengikuti input terakhir yang dikirim; mengedit formulir belum mengubah hasil.
+- Rekomendasi hanya berjalan setelah **Cari rekomendasi**. Simulasi baru menghapus hasil pencarian sebelumnya. Reset menghapus hasil dan input sesi.
+- Tab Proses & diagnostik menampilkan nilai fitur, transformasi RobustScaler, koefisien dan kontribusi Linear Regression, jalur node Decision Tree aktual, pembandingan ML terhadap rumus dataset, serta peringatan rentang training dan detail error. Kalkulator tetap berjalan apabila model gagal dimuat.
+- Tabel rekomendasi dengan kolom numerik yang dapat diurutkan, grafik, peringkat dan jumlah kandidat yang lolos tiap batas.
+- Tab penelitian memiliki filter algoritma/skenario serta EDA kategorikal interaktif berdasarkan 60.016 data development dan grafik dari notebook terbaru. Model dan hasil training V2 tidak diganti.
+- Tema Streamlit di `.streamlit/config.toml`. Pastikan folder tersembunyi ikut diunggah jika menggunakan upload browser.
+
 ## Fitur aplikasi
 
 1. Simulasi tanpa bunga sesuai dataset atau bunga flat berdasarkan asumsi pengguna.
 2. Rasio seluruh cicilan, batas kemampuan bayar, anggaran DP, total pembayaran dan sisa penghasilan.
 3. Prediksi ML ditampilkan terpisah dari keputusan simulasi; peringatan input di luar rentang training.
 4. Rekomendasi maksimal lima mobil unik berdasarkan batas rasio 35%, anggaran DP, skema pembiayaan dan preferensi ranking.
-5. Tab evaluasi model, tabel cross-validation, uji generalisasi, dan grafik penelitian.
+5. Tab proses dan diagnostik serta hasil penelitian, tabel cross-validation, uji generalisasi, dan grafik EDA.
 
 Harga katalog bukan harga pasar terkini. Simulasi tidak mencakup biaya hidup, biaya administrasi, asuransi, pajak atau perawatan. Tidak ada keputusan persetujuan kredit yang dibuat aplikasi.
 
@@ -39,11 +48,11 @@ python -m streamlit run app.py
 ## Deploy melalui Streamlit Community Cloud
 
 1. Buat repository GitHub baru, tambahkan README awal jika menggunakan web upload.
-2. Ekstrak ZIP dan unggah isi direktori `predcicilanbelimobil-v2/` (bukan ZIP atau direktori pembungkus) ke root repo. Pertahankan susunan folder. Jangan unggah dataset mentah.
+2. Ekstrak ZIP dan unggah isi direktori `predcicilanbelimobil-v3/` (bukan ZIP atau direktori pembungkus) ke root repo. Pertahankan susunan folder. Jangan unggah dataset mentah.
 3. Buka https://share.streamlit.io/ dan hubungkan akun GitHub. Pilih **Create app** dan opsi deploy dari repo yang sudah ada.
-4. Isi repository `USERNAME/predcicilanbelimobil-v2`, branch `main`, main file path `app.py`.
+4. Isi repository `USERNAME/predcicilanbelimobil-v3`, branch `main`, main file path `app.py`.
 5. Di Advanced settings pilih Python **3.13**, simpan lalu deploy. Tidak membutuhkan secrets.
-6. Periksa tiga tab dan lakukan simulasi dengan berbagai input. Commit perubahan ke repo untuk memperbarui aplikasi.
+6. Periksa empat tab dan lakukan simulasi dengan berbagai input. Commit perubahan ke repo untuk memperbarui aplikasi.
 
 ## Training ulang (opsional, tidak diperlukan untuk deploy)
 
@@ -58,7 +67,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q app.py src tests
 ```
 
-Sembilan unit test mencakup perhitungan, ambang rasio, validasi input, monotonisitas seluruh kombinasi katalog, model dan rekomendasi. Pengujian UI Streamlit dan deployment cloud perlu dijalankan pada lingkungan yang memiliki Streamlit.
+17 unit test lulus pada Python 3.13.5, termasuk 9 pengujian sebelumnya dan 8 pengujian workflow baru. Pengujian mencakup rekonstruksi prediksi linear, node tree, fallback ketika model gagal, konsistensi mode bunga, dan statistik rekomendasi. Sintaks Python diperiksa. Paket Streamlit tidak tersedia pada lingkungan pembuatan ZIP sehingga UI browser dan deployment cloud belum diuji langsung.
 
 ## Struktur
 
@@ -70,5 +79,16 @@ data/katalog_mobil.csv          # katalog tanpa identitas pribadi
 src/                           # feature engineering, inferensi, kalkulator, rekomendasi
 notebooks/                     # penelitian dan dependensi training
 reports/                       # metrik, audit data, grafik
-tests/test_system.py            # pengujian otomatis
+tests/                         # test_system dan test_workflow
+.streamlit/config.toml         # tema aplikasi
 ```
+
+## Pemeriksaan UI setelah deploy
+
+1. Buka aplikasi: hasil harus kosong sebelum klik Jalankan simulasi.
+2. Gunakan nilai default Ayla, DP 25%, tenor 48 bulan, penghasilan Rp15 juta: cicilan Rp2.656.250, rasio 17,71%, sesuai batas simulasi.
+3. Ubah penghasilan menjadi Rp5 juta tanpa submit: hasil lama tetap tampil. Klik Jalankan simulasi: rasio 53,13%, melebihi batas. Hasil rekomendasi lama harus hilang.
+4. Buka Proses & diagnostik: nilai fitur, kontribusi regresi dan jalur node tree harus muncul. Untuk input Rp1 juta, peringatan rentang training harus muncul.
+5. Buka Rekomendasi, tekan Cari rekomendasi; tabel atau pesan hasil kosong muncul bersama jumlah filter. Anggaran DP Rp0 menghasilkan nol alternatif.
+6. Pilih bunga flat 5% dengan input default: cicilan Rp3.187.500; prediksi ML tanpa bunga tetap sama.
+7. Buka Hasil penelitian, ganti skenario dan kategori; grafik dan tabel harus diperbarui. Periksa unduhan CSV dan tombol reset.

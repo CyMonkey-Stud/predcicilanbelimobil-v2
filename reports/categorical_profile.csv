@@ -1,0 +1,12 @@
+variable,categories,most_frequent,most_frequent_pct,unknown_count
+company,8,Mitsubishi,12.846574246867503,0
+car_model,46,BYD | Dolphin,3.127499333511064,0
+body_style,5,SUV,44.673087176752865,0
+engine,15,Electric Motor,24.930018661690216,0
+transmission,2,Manual,50.01999466808851,0
+tenor_group,5,60,20.124633431085044,0
+province,14,Jawa Timur,12.465009330845108,0
+purchase_type,3,Business,33.46940815782458,0
+insurance_type,3,All Risk,55.27026126366302,5936
+color,6,White,16.867168754998666,0
+trade_in,2,No,74.94834710743801,0
