@@ -1,7 +1,0 @@
-training,subset,n_train,n_eval,Accuracy,Balanced_accuracy,Precision,Recall,F1,Macro_F1
-All valid,All validation,48012,12004,1.0,1.0,1.0,1.0,1.0,1.0
-All valid,Income IQR flags,48012,1118,1.0,1.0,1.0,1.0,1.0,1.0
-All valid,Other income,48012,10886,1.0,1.0,1.0,1.0,1.0,1.0
-Exclude income IQR flags,All validation,43633,12004,1.0,1.0,1.0,1.0,1.0,1.0
-Exclude income IQR flags,Income IQR flags,43633,1118,1.0,1.0,1.0,1.0,1.0,1.0
-Exclude income IQR flags,Other income,43633,10886,1.0,1.0,1.0,1.0,1.0,1.0

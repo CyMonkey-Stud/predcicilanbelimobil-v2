@@ -1,5 +1,0 @@
-task,method,model,scenario,Accuracy,Balanced_accuracy,Precision,Recall,F1,Macro_F1
-clf,Selected ML,Decision Tree,3_financial_tuned,1.0,1.0,1.0,1.0,1.0,1.0
-clf,Best raw ML,XGBoost,2_raw_tuned,0.9946680885097308,0.9943526378896883,0.9906337186129932,0.9934052757793765,0.992017561364997,0.9940073797018121
-clf,Dummy,Dummy,baseline,0.6664889362836577,0.5,0.0,0.0,0.0,0.39993601023836184
-clf,Formula/rule,Non-ML,baseline,1.0,1.0,1.0,1.0,1.0,1.0

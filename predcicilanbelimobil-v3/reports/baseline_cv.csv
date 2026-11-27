@@ -1,5 +1,0 @@
-task,method,cv_primary,cv_std
-reg,Dummy,6018267.545166667,128289.48627162274
-reg,Formula / rule,0.0,0.0
-clf,Dummy,0.3999099774943736,7.350306805051828e-05
-clf,Formula / rule,1.0,0.0
