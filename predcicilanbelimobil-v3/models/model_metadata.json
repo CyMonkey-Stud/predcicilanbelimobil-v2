@@ -1,0 +1,196 @@
+{
+  "seed": 2026,
+  "threshold": 0.35,
+  "target_definition": "Observed installment / (annual income / 12) <= 0.35, unrounded",
+  "dataset_sha256": "c9e3ed6cf0dd615f37467207d9012efae9ee8ba6dc4419bbf9b7b326153f6071",
+  "n_credit_valid": 75020,
+  "n_development": 60016,
+  "n_cv_sample": 12000,
+  "n_test": 15004,
+  "cv_folds": 5,
+  "search_iterations": 4,
+  "python": "3.13.5",
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "xgboost": "3.1.3",
+    "joblib": "1.5.3",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2"
+  },
+  "limitations": [
+    "Deterministic interest-free target in supplied data",
+    "Affordability rule, not actual credit approval",
+    "No external validation"
+  ],
+  "recommended_app_decision": "formula_status; ML results displayed separately",
+  "models": {
+    "reg": {
+      "file": "model_cicilan.pkl",
+      "name": "Linear Regression",
+      "scenario": "3_financial_tuned",
+      "feature_set": "financial",
+      "feature_columns": [
+        "price_idr",
+        "down_payment",
+        "loan_tenure",
+        "loan_amount",
+        "dp_ratio",
+        "base_installment"
+      ],
+      "raw_input_columns": [
+        "price_idr",
+        "down_payment",
+        "loan_tenure"
+      ],
+      "cv_primary": 0.2532725382981589,
+      "cv_std": 0.00323327891970504,
+      "cv_metric": "MAE",
+      "params": {
+        "memory": null,
+        "steps": [
+          [
+            "scale",
+            "RobustScaler()"
+          ],
+          [
+            "model",
+            "LinearRegression(fit_intercept=False)"
+          ]
+        ],
+        "transform_input": null,
+        "verbose": false,
+        "scale": "RobustScaler()",
+        "model": "LinearRegression(fit_intercept=False)",
+        "scale__copy": true,
+        "scale__quantile_range": [
+          25.0,
+          75.0
+        ],
+        "scale__unit_variance": false,
+        "scale__with_centering": true,
+        "scale__with_scaling": true,
+        "model__copy_X": true,
+        "model__fit_intercept": false,
+        "model__n_jobs": null,
+        "model__positive": false,
+        "model__tol": 1e-06
+      },
+      "test_metrics": {
+        "task": "reg",
+        "method": "Selected ML",
+        "model": "Linear Regression",
+        "scenario": "3_financial_tuned",
+        "MAE": 0.2510393723362937,
+        "RMSE": 0.2899179713340973,
+        "R2": 0.999999999999999,
+        "MedianAE": 0.25852861953899264,
+        "MAPE_pct": 3.7710850948935885e-06,
+        "MaxAE": 0.501801272854209
+      },
+      "training_ranges": {
+        "price_idr": {
+          "min": 170000000.0,
+          "max": 970000000.0
+        },
+        "down_payment": {
+          "min": 34009696.0,
+          "max": 387748163.0
+        },
+        "loan_tenure": {
+          "min": 12.0,
+          "max": 60.0
+        }
+      },
+      "size_bytes": 935
+    },
+    "clf": {
+      "file": "model_kelayakan.pkl",
+      "name": "Decision Tree",
+      "scenario": "3_financial_tuned",
+      "feature_set": "financial",
+      "feature_columns": [
+        "monthly_income",
+        "price_idr",
+        "down_payment",
+        "loan_tenure",
+        "loan_amount",
+        "dp_ratio",
+        "base_installment",
+        "estimated_dti",
+        "log_estimated_dti"
+      ],
+      "raw_input_columns": [
+        "monthly_income",
+        "price_idr",
+        "down_payment",
+        "loan_tenure"
+      ],
+      "cv_primary": 1.0,
+      "cv_std": 0.0,
+      "cv_metric": "Macro-F1",
+      "params": {
+        "memory": null,
+        "steps": [
+          [
+            "scale",
+            "passthrough"
+          ],
+          [
+            "model",
+            "DecisionTreeClassifier(max_depth=12, min_samples_leaf=8, random_state=2026)"
+          ]
+        ],
+        "transform_input": null,
+        "verbose": false,
+        "scale": "passthrough",
+        "model": "DecisionTreeClassifier(max_depth=12, min_samples_leaf=8, random_state=2026)",
+        "model__ccp_alpha": 0.0,
+        "model__class_weight": null,
+        "model__criterion": "gini",
+        "model__max_depth": 12,
+        "model__max_features": null,
+        "model__max_leaf_nodes": null,
+        "model__min_impurity_decrease": 0.0,
+        "model__min_samples_leaf": 8,
+        "model__min_samples_split": 2,
+        "model__min_weight_fraction_leaf": 0.0,
+        "model__monotonic_cst": null,
+        "model__random_state": 2026,
+        "model__splitter": "best"
+      },
+      "test_metrics": {
+        "task": "clf",
+        "method": "Selected ML",
+        "model": "Decision Tree",
+        "scenario": "3_financial_tuned",
+        "Accuracy": 1.0,
+        "Balanced_accuracy": 1.0,
+        "Precision": 1.0,
+        "Recall": 1.0,
+        "F1": 1.0,
+        "Macro_F1": 1.0
+      },
+      "training_ranges": {
+        "monthly_income": {
+          "min": 4167152.8333333335,
+          "max": 249967094.25
+        },
+        "price_idr": {
+          "min": 170000000.0,
+          "max": 970000000.0
+        },
+        "down_payment": {
+          "min": 34009696.0,
+          "max": 387748163.0
+        },
+        "loan_tenure": {
+          "min": 12.0,
+          "max": 60.0
+        }
+      },
+      "size_bytes": 1107
+    }
+  }
+}

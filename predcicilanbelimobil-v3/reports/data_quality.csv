@@ -1,0 +1,5 @@
+stage,before,after,removed
+Duplikat penuh,100000,100000,0
+Filter transaksi kredit,100000,75020,24980
+Missing/invalid kolom wajib,75020,75020,0
+Validasi finansial dan satuan integer,75020,75020,0
