@@ -4,6 +4,7 @@ import pandas as pd
 from .financial_calculator import calculate
 from .features import make_features, formula_status
 from .recommendation import recommend
+from .eligibility import explain_eligibility
 
 
 @dataclass(frozen=True)
@@ -62,7 +63,7 @@ def simulate(req, models, metadata, asset_error=None):
     f = calculate(req.price, req.dp, req.tenure, req.income, req.other, req.rate, req.mode)
     raw = pd.DataFrame([dict(price_idr=req.price, down_payment=f.down_payment, loan_tenure=req.tenure, monthly_income=req.income)])
     result = {'request': req, 'finance': f, 'raw': raw, 'budget_ok': f.down_payment <= req.budget,
-              'rule_label': int(formula_status(raw)[0]), 'models': {}, 'errors': {}, 'warnings': [], 'trace_errors': {}}
+              'eligibility': explain_eligibility(req, f), 'rule_label': int(formula_status(raw)[0]), 'models': {}, 'errors': {}, 'warnings': [], 'trace_errors': {}}
     for task in ('reg', 'clf'):
         try:
             if asset_error:
@@ -120,7 +121,14 @@ def recommend_for(req, catalog, explore, ranking, body):
 def export_result(result):
     row = asdict(result['request']) | asdict(result['finance'])
     row['dp_budget_ok'] = result['budget_ok']
-    row['simulation_eligible'] = result['finance'].affordable and result['budget_ok']
+    e = result['eligibility']
+    row['simulation_eligible'] = e['eligible']
+    row['status_simulasi'] = 'LAYAK' if e['eligible'] else 'TIDAK LAYAK'
+    row['alasan_status'] = ('Rasio dan anggaran DP terpenuhi' if e['eligible'] else '; '.join(
+        reason for failed, reason in [(not e['debt_ok'], 'Rasio seluruh cicilan melebihi 35%'),
+                                     (not e['dp_ok'], 'Uang muka melebihi anggaran')] if failed))
+    for key in ('total_debt', 'debt_limit', 'debt_gap', 'dp_gap', 'min_income', 'income_shortfall'):
+        row[key] = e[key]
     row['dataset_rule_label'] = result['rule_label']
     for task, data in result['models'].items():
         row['ml_' + task] = data['prediction']

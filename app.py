@@ -86,7 +86,7 @@ st.markdown('''<style>
 
 with st.sidebar:
     st.markdown('### AutoFinance Lab')
-    st.caption('DATA SCIENCE PROJECT / V3')
+    st.caption('DATA SCIENCE PROJECT / V4')
     st.markdown('**Cara menggunakan**')
     st.markdown('1. Isi kondisi finansial dan pilihan kendaraan.\n2. Tekan **Jalankan simulasi**.\n3. Baca hasil dan periksa proses algoritma.\n4. Cari alternatif mobil sesuai anggaran.')
     st.divider()
@@ -159,22 +159,41 @@ with sim_tab:
             st.caption(f"SIMULASI #{st.session_state.run_count} · Hasil terakhir yang dikirim")
             st.markdown(f'### {req.company} {req.model}')
             snapshot(req)
-            ok = f.affordable and result['budget_ok']
-            if ok:
-                st.success('Sesuai batas simulasi: rasio dan anggaran DP terpenuhi.')
-            else:
-                reasons = []
-                if not f.affordable: reasons.append('rasio seluruh cicilan melebihi 35%')
-                if not result['budget_ok']: reasons.append('DP melebihi anggaran')
-                st.error('Melebihi batas simulasi: ' + '; '.join(reasons) + '.')
+            e = result['eligibility']
+            with st.container(border=True):
+                st.caption('KEPUTUSAN KEMAMPUAN BAYAR')
+                if e['eligible']:
+                    st.success('✅ LAYAK DALAM SIMULASI')
+                    st.write('Kedua syarat terpenuhi: seluruh cicilan tidak melebihi 35% penghasilan dan uang muka masih dalam anggaran.')
+                else:
+                    st.error('❌ TIDAK LAYAK DALAM SIMULASI')
+                    failed = []
+                    if not e['debt_ok']:
+                        failed.append(f'total cicilan melampaui batas sebesar {rp(-e["debt_gap"])} per bulan')
+                    if not e['dp_ok']:
+                        failed.append(f'anggaran DP kurang {rp(-e["dp_gap"])}')
+                    st.write('Belum memenuhi syarat karena ' + ' dan '.join(failed) + '.')
+                st.markdown('#### Mengapa hasilnya demikian?')
+                a, b = st.columns(2)
+                a.metric('Rasio seluruh cicilan', pct(f.ratio), help='Cicilan mobil dan cicilan lain dibagi penghasilan.')
+                b.metric('Batas rasio penelitian', '35%')
+                if e['debt_ok']:
+                    st.success(f'✓ Rasio memenuhi batas. Total cicilan {rp(e["total_debt"])} dari batas {rp(e["debt_limit"])} per bulan. Sisa ruang cicilan {rp(e["debt_gap"])}.')
+                else:
+                    st.error(f'✗ Rasio melebihi batas. Total cicilan {rp(e["total_debt"])} dari batas {rp(e["debt_limit"])} per bulan. Kelebihan {rp(-e["debt_gap"])}.')
+                if e['dp_ok']:
+                    st.success(f'✓ DP sesuai anggaran. Dibutuhkan {rp(f.down_payment)} dari {rp(req.budget)} yang tersedia. Sisa anggaran {rp(e["dp_gap"])}.')
+                else:
+                    st.error(f'✗ DP melebihi anggaran. Dibutuhkan {rp(f.down_payment)} dari {rp(req.budget)} yang tersedia. Kekurangan {rp(-e["dp_gap"])}.')
+                if abs(f.ratio - .35) < .00005:
+                    st.caption(f'Rasio sangat dekat batas (nilai sebelum pembulatan: {f.ratio*100:.6f}%). Keputusan memakai nilai penuh.')
+                st.caption('Kedua syarat wajib terpenuhi. Ini penilaian berbasis asumsi penelitian, bukan persetujuan kredit resmi.')
             with st.container(border=True):
                 st.caption('ESTIMASI CICILAN MOBIL / BULAN')
                 st.markdown(f'## {rp(f.installment)}')
                 a, b = st.columns(2)
-                a.metric('Rasio seluruh cicilan', pct(f.ratio))
+                a.metric('Total cicilan per bulan', rp(e['total_debt']))
                 b.metric('Batas cicilan mobil', rp(f.installment_limit))
-                st.progress(min(1.0, f.ratio), text=f'Rasio {pct(f.ratio)} | Batas 35%')
-                st.caption('Bar dibatasi pada 100%; nilai rasio sebenarnya tetap ditampilkan.')
                 a, b = st.columns(2)
                 a.metric('Uang muka', rp(f.down_payment))
                 b.metric('Sisa penghasilan', rp(f.remaining_income))
@@ -188,13 +207,38 @@ with sim_tab:
                 else:
                     st.warning(f'Kewajiban melebihi pendapatan sebesar {rp(-f.remaining_income)} per bulan.')
             with st.container(border=True):
+                st.markdown('#### Langkah selanjutnya')
+                if e['eligible']:
+                    st.write('Skema ini memenuhi dua syarat simulasi. Sebelum membeli, periksa biaya hidup, dana darurat, asuransi, dan penawaran pembiayaan aktual.')
+                else:
+                    if not e['debt_ok']:
+                        st.write(f'**Batas cicilan mobil:** {rp(f.installment_limit)} per bulan. Untuk mempertahankan skema ini, penghasilan minimal menurut aturan 35% adalah {rp(e["min_income"])} per bulan (selisih {rp(e["income_shortfall"])}).')
+                        if e['other_exhausts_limit']:
+                            st.warning('Cicilan lain sudah menghabiskan atau melebihi batas 35%; saat ini tidak ada ruang cicilan mobil yang positif dalam batas tersebut.')
+                        else:
+                            st.write(f'Kurangi total cicilan sebesar setidaknya {rp(-e["debt_gap"])} per bulan, misalnya dengan memilih skema atau mobil yang lebih terjangkau.')
+                    if not e['dp_ok']:
+                        st.write(f'**Kekurangan anggaran DP:** {rp(-e["dp_gap"])}. Pertimbangkan kendaraan lebih murah atau DP yang sesuai dana tersedia, selama rasio cicilan juga memenuhi batas.')
+                    st.markdown('**Alternatif skema untuk mobil yang sama**')
+                    if e['alternatives']:
+                        st.caption(f'{len(e["alternatives"])} skema lain memenuhi kedua syarat. Tiga skema terdekat dari pilihan awal ditampilkan; bunga, pendapatan dan anggaran tetap sama.')
+                        options = pd.DataFrame(e['alternatives'][:3])
+                        options['ratio'] *= 100
+                        table(options, {'dp_percent': st.column_config.NumberColumn('DP', format='%d%%'), 'tenure': 'Tenor (bln)', 'down_payment': money_col('Uang muka'), 'installment': money_col('Cicilan/bln'), 'ratio': st.column_config.NumberColumn('Rasio', format='%.2f%%'), 'total_payment': money_col('Total bayar')})
+                        st.caption('Tenor lebih panjang dapat meningkatkan total biaya dalam mode bunga. Gunakan alternatif hanya jika sesuai kebutuhan.')
+                    else:
+                        st.info('Tidak ada kombinasi DP 20–40% dan tenor 12–60 bulan untuk mobil ini yang memenuhi kedua syarat pada kondisi saat ini.')
+                    st.write('Buka tab **02 Rekomendasi**, lalu tekan **Cari rekomendasi** untuk mencari mobil alternatif.')
+            with st.container(border=True):
                 st.markdown('#### Prediksi ML (mode dataset)')
                 a,b = st.columns(2)
                 reg = result['models'].get('reg')
                 clf = result['models'].get('clf')
                 a.metric('Linear Regression', rp(reg['prediction'], 2) if reg else 'Tidak tersedia')
                 b.metric('Decision Tree', ('Sesuai' if clf['prediction'] else 'Melebihi') if clf else 'Tidak tersedia')
-                st.caption('Tanpa bunga dan cicilan lain. Lihat tab Proses & diagnostik untuk penjelasan fitur, jalur model, dan selisih terhadap rumus.')
+                st.caption('Prediksi ML mengikuti definisi label dataset: tanpa bunga, cicilan lain, atau anggaran DP. Hasil ML tidak menentukan status akhir simulasi.')
+                if clf and bool(clf['prediction']) != e['eligible']:
+                    st.info('Status ML dan keputusan simulasi berbeda. Periksa definisi label dataset dan syarat finansial pada tab Proses & diagnostik; status akhir tetap memakai kedua syarat simulasi.')
             if result['errors'] or result['trace_errors']:
                 st.warning('Sebagian proses ML/interpretasi gagal. Kalkulasi finansial tetap tersedia. Lihat tab Proses & diagnostik.')
             elif result['warnings']:

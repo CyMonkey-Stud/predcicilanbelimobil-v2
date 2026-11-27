@@ -11,6 +11,14 @@ Proyek data science untuk membandingkan algoritma regresi dan klasifikasi, mengh
 - Random Forest, XGBoost dan algoritma lain tetap dibandingkan di notebook dan laporan CV.
 - Target cicilan dataset mengikuti rumus tanpa bunga; label klasifikasi berasal dari rasio cicilan terhadap pendapatan ≤35%. Skor tinggi merefleksikan target deterministik, bukan kemampuan memprediksi persetujuan kredit atau gagal bayar nyata.
 
+## Pembaruan V4: keputusan simulasi yang dapat dijelaskan
+
+- Setelah menekan **Jalankan simulasi**, status **LAYAK DALAM SIMULASI** muncul hanya jika seluruh cicilan maksimal 35% penghasilan dan DP tidak melebihi anggaran. Jika salah satu gagal, status **TIDAK LAYAK DALAM SIMULASI** muncul dengan alasan nominal dan kondisi kedua syarat.
+- Panel alasan memperlihatkan total cicilan, batas, selisih nominal, kebutuhan DP dan sisa/kekurangan anggaran. Keputusan menggunakan perbandingan rupiah tanpa pembulatan persentase tampilan.
+- Jika belum layak, tampilkan penghasilan minimum menurut aturan rasio untuk skema yang sama, kekurangan anggaran, serta tiga alternatif DP/tenor terdekat yang sudah lolos kedua syarat. Ranking alternatif mengutamakan jumlah perubahan langkah DP/tenor, kemudian total pembayaran, cicilan, dan DP. Bila tidak ada alternatif, arahkan ke tab Rekomendasi.
+- Prediksi ML tetap terpisah dari keputusan akhir dan memakai definisi dataset tanpa bunga, cicilan lain, dan anggaran DP. Status akhir tidak berubah jika model gagal dimuat.
+- CSV hasil simulasi memuat status, alasan, batas, selisih, dan penghasilan minimum. Total 24 unit test lulus; rendering browser Streamlit belum diuji karena paket Streamlit tidak tersedia di lingkungan pengujian.
+
 ## Pembaruan V3: UI dan transparansi algoritma
 
 - Formulir utama di samping hasil. Simulasi hanya berjalan setelah tombol **Jalankan simulasi** ditekan. Hasil tetap mengikuti input terakhir yang dikirim; mengedit formulir belum mengubah hasil.
